@@ -18,8 +18,9 @@ open XPlot.GoogleCharts
 // letters, but only smaller number of more frequent ones). The
 // 'cleanDir' contains cleaned Wikipedia pages in various languages.
 
-let featuresFile = __SOURCE_DIRECTORY__ + "/features.txt"
-let cleanDir = __SOURCE_DIRECTORY__ + "/clean/"
+let path = @"C:\Dev\GitHub\Workshop-Practical-Machine-Learning\src\day-1\"
+let featuresFile = path + "features.txt"
+let cleanDir = path + "clean\\"
 
 
 // The first task is to calculate probabilities of letter pairs in a text
@@ -34,10 +35,10 @@ let sampleFile = cleanDir + "English.txt"
 // from the feature file and *all text* from the sampleFile. 
 
 // Use "File.ReadAllLines" to get the features
-let features = __
+let features = File.ReadAllLines featuresFile
 
 // Use "File.ReadAllText" to get all the sample text
-let sampleText = __
+let sampleText = File.ReadAllText sampleFile
 
 
 // ----------------------------------------------------------------------------
@@ -77,7 +78,11 @@ let counts =
   //  - Use 'Seq.pairwise' to turn it into pairs of letters
   //  - Use 'Seq.map' to turn the letter pairs into strings
   //  - Use 'Seq.countBy' to count how many times each pair appears
-  []
+  sampleText
+  |> Seq.pairwise
+  |> Seq.map(fun (a, b) -> string a + string b)
+  |> Seq.countBy(fun p -> p)
+  
 
 
 // ----------------------------------------------------------------------------
@@ -129,7 +134,16 @@ let total = float (String.length sampleText - 1)
 // Create a lookup table from 'counts' (call it 'countLookup'). Then
 // calculate probability for all features using "features |> Array.map" and
 // returning 1e-10 if the feature is not found or "count / total" otherwise
-let probabilities = []
+
+let countLookup = dict counts
+let probabilities = 
+    features
+    |> Array.map(fun f ->
+        let found, count = countLookup.TryGetValue f
+        if(found)
+        then float count/total
+        else 1e-10
+    )
 
 
 // ----------------------------------------------------------------------------
@@ -148,10 +162,22 @@ Chart.Column(Seq.zip features probabilities)
 // Also, change it so that it processes the 'text' given as a parameter
 
 let getFeatureVector text = 
-  let counts = __
-  let total = __
-  let countLookup = __
-  features |> Array.map (fun feature -> __)
+  let counts =
+      text
+      |> Seq.pairwise
+      |> Seq.map(fun (a, b) -> string a + string b)
+      |> Seq.countBy id
+
+  let total = float (String.length text - 1)
+
+  let countLookup = dict counts
+
+  features |> Array.map(fun f ->
+        let found, count = countLookup.TryGetValue f
+        if(found)
+        then (float count)/total
+        else 1e-10
+    )
 
 
 // Now, let's run your 'getFeatureVector' function on all languages in the
@@ -205,7 +231,8 @@ distance (byLanguage.["English"]) (byLanguage.["Czech"])
 
 
 let classifyLanguage text =
-    __
+    let f = getFeatureVector text
+    classify languageFeatures f
 
 
 // Some examples    
@@ -224,15 +251,35 @@ classifyLanguage "us stock markets follow global plunge as china concerns deepen
 //    Use 'languageFeatures' and 'distance' to find the closest language for each 
 //    language.
 
+type Distance = { a:string; b:string; distance:float}
+
+languageFeatures
+|> Array.map(fun (a, af) -> 
+        languageFeatures
+        |> Array.filter(fun (b,_) -> a<>b)
+        |> Array.map(fun (b, bf) -> { a=a; b=b; distance=distance af bf } )
+        |> Array.sortBy(fun x ->  x.distance)
+        |> Array.head
+    )
+
+
 
 
 // 2. Which languages are the closest in terms of their absolute distance?
 
+languageFeatures
+|> Seq.pairwise
+|> Seq.map(fun ((a,af),(b, bf)) -> { a=a; b=b; distance = distance af bf })
+|> Seq.sortBy(fun e -> e.distance)
 
 
 // 3. Which languages are the most different?
 //    And which language is the most different from all other languages?
 
+languageFeatures
+|> Seq.pairwise
+|> Seq.map(fun ((a,af),(b, bf)) -> { a=a; b=b; distance = distance af bf })
+|> Seq.sortByDescending(fun e -> e.distance)
 
 
 // 4. Which feature distinguishes English the most from all other languages?
