@@ -11,4 +11,9 @@ Reinforcment learning
 
 
 
- 
+
+Methodology
+	- Establish a baseline with test/train iterate
+	Create a simple working model first
+	next : good enough, faster, more accurate ?
+	Distance is crucial
