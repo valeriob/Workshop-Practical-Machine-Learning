@@ -1,0 +1,14 @@
+Classification vs Regression
+	- Predict what class it belong
+	- Predict a number (ex price)
+Supervised vs unsup
+ 	- tell me something about my data
+	- know or don't know the answer
+	
+Online Learning
+	- 
+Reinforcment learning
+
+
+
+ 

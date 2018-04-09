@@ -32,6 +32,7 @@
 // Try typing let x = 42 in the script file, 
 // right-click and select "Execute in interactive".
 // (or use the Alt+Enter keyboard shortcut)
+//let x = 42
 
 // [ YOUR CODE GOES HERE! ]
 
@@ -72,10 +73,11 @@ open System.IO
 // File.ReadAllLines(path)
 // returns an array of strings for each line 
 
-let localPath = __SOURCE_DIRECTORY__
-let dataPath = Path.Combine(localPath,"digits")
+let localPath = @"C:\Dev\GitHub\Workshop-Practical-Machine-Learning\src\day-1\"
+let dataPath = Path.Combine(localPath,"digits", "trainingsample.csv")
 
 // [ YOUR CODE GOES HERE! ]
+let rows =  File.ReadAllLines(dataPath)
  
 // 2. EXTRACTING COLUMNS
  
@@ -102,8 +104,8 @@ let lengths2 = strings |> Array.map (fun s -> s.Length)
 let csvToSplit = "1,2,3,4,5"
 let splitResult = csvToSplit.Split(',')
  
- 
 // [ YOUR CODE GOES HERE! ]
+let rowsAndColumns = rows |> Array.map(fun (row:string) -> row.Split(','))
  
  
 // 3. CLEANING UP HEADERS
@@ -121,8 +123,8 @@ let twoToFive = someNumbers.[ 1 .. 4 ] // grab a slice
 let upToThree = someNumbers.[ .. 2 ] 
 // </F# QUICK-STARTER> 
 
-
 // [ YOUR CODE GOES HERE! ]
+let data3 = rowsAndColumns.[1 ..]
  
  
 // 4. CONVERTING FROM STRINGS TO INTS
@@ -138,9 +140,10 @@ let castedInt = (int)"42"
 let convertedInt = Convert.ToInt32("42")
 // or, even more simple:
 let intAsFunction = int "42" 
- 
+
 // [ YOUR CODE GOES HERE! ]
- 
+
+let data4 = data3 |> Array.map (fun r -> r |> Array.map (fun c -> (int)c))
  
 // 5. CONVERTING ARRAYS TO RECORDS
  
@@ -157,8 +160,18 @@ let example = { Label = 1; Pixels = [| 1; 2; 3; |] }
 
  
 // [ YOUR CODE GOES HERE! ]
- 
- 
+type Image = { Label : int; Pixels : int[] }
+
+let parseImage (row:int[]) : Image =
+    { Label = row.[0]; Pixels = row.[1 ..] }
+
+let add (a:float) b = a + b
+
+let foo x = x |> Array.length
+
+let data5 = data4 |> Array.map (fun d ->  { Label = d.[0]; Pixels = d.[1 ..] })
+
+
 // 6. COMPUTING DISTANCES
  
 // We need to compute the distance between images
@@ -183,14 +196,19 @@ let map2PointsExample (P1: int[]) (P2: int[]) =
 
 
 // Having a function like
-let distance (p1: int[]) (p2: int[]) = 42
+let distance_template (p1: int[]) (p2: int[]) = 42
 // would come in very handy right now,
 // except that in this case, 
 // 42 is likely not the right answer
  
 // [ YOUR CODE GOES HERE! ]
  
- 
+let distance (p1: int[]) (p2: int[]) = 
+        Array.map2(fun a b -> (a - b) * (a-b)) p1 p2
+        |> Array.sum
+        |> float
+        |> sqrt
+
 // 7. WRITING THE CLASSIFIER FUNCTION
  
 // We are now ready to write a classifier function!
@@ -228,7 +246,7 @@ let functionWithClosure (x: int) =
  // The classifier function should probably
 // look like this - except that this one will
 // classify everything as a 0:
-let classify (unknown:int[]) =
+let classify_template (unknown:int[]) =
     // do something smart here
     // like find the Example with
     // the shortest distance to
@@ -238,7 +256,11 @@ let classify (unknown:int[]) =
     0 
  
 // [ YOUR CODE GOES HERE! ]
- 
+let classify (image:int[]) : int =
+    data5 
+    |> Array.minBy(fun r -> distance r.Pixels image )
+    |> fun x -> x.Label
+
  
 // 8. EVALUATING THE MODEL AGAINST VALIDATION DATA
  
@@ -255,6 +277,20 @@ let classify (unknown:int[]) =
  
  
 // [ YOUR CODE GOES HERE! ]
+let validationDataPath = Path.Combine(localPath,"digits", "validationsample.csv")
+let val1 =  File.ReadAllLines(validationDataPath)
+let val2 = val1 |> Array.map(fun (row:string) -> row.Split(','))
+let val3 = val2.[1 ..]
+let val4 = val3 |> Array.map (fun r -> r |> Array.map (fun c -> (int)c))
+let val5 = val4 |> Array.map (fun d ->  { Label = d.[0]; Pixels = d.[1 ..] })
+
+
+type ClassifiedImage = { Image : Image; Classified : int }
+
+let calculateRate classify =
+    let classified = val5 |> Array.map (fun v -> { Image = v; Classified = classify v.Pixels })
+    let good = classified |> Array.filter (fun c -> c.Image.Label = c.Classified)
+    (float good.Length) / (float classified.Length) 
 
 
 // 9. SHIP IT!
@@ -271,6 +307,30 @@ let classify (unknown:int[]) =
 // * reduce / rescale the pixels from 0 - 255 to 0 - k
 // * apply blurring to pixels
 // * ... try out completely different algorithms?
+
+let distanceAbs (p1: int[]) (p2: int[]) = 
+        Array.map2(fun a b -> abs(a - b)) p1 p2
+        |> Array.sum
+        |> float
+        |> sqrt
+
+let classifyKnn (k:int) (image:int[]) =
+    data5 
+    |> Array.sortBy(fun r -> distance r.Pixels image )
+    |> Array.take k
+    |> Array.groupBy (fun r -> r.Label) 
+    |> Array.sortByDescending (fun (_,value) -> value.Length)
+    |> Array.map(fun (key,_) -> key)
+    |> Array.head
+
+let knn5 = classifyKnn 10
+
+calculateRate knn5
+
+
+
+    
+
 
 // Improve speed: this algorithm is not very fast. Can 
 // you squeeze out some speed? 
