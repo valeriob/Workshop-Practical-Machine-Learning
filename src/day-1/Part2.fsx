@@ -222,6 +222,7 @@ distance (byLanguage.["English"]) (byLanguage.["Spanish"])
 distance (byLanguage.["French"]) (byLanguage.["English"])
 distance (byLanguage.["English"]) (byLanguage.["Czech"])
 
+distance (byLanguage.["Italian"]) (byLanguage.["Spanish"])
 
 // Given some text, we can now classify it by finding the language with the
 // most similar feature vector. To do this, we need to call 
@@ -233,6 +234,9 @@ distance (byLanguage.["English"]) (byLanguage.["Czech"])
 let classifyLanguage text =
     let f = getFeatureVector text
     classify languageFeatures f
+
+let classifyLanguage2 text =
+    text |> getFeatureVector |>classify languageFeatures
 
 
 // Some examples    

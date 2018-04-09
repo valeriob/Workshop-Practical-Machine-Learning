@@ -17,3 +17,12 @@ Methodology
 	Create a simple working model first
 	next : good enough, faster, more accurate ?
 	Distance is crucial
+
+Classification with Neural network
+	-
+
+Domande :
+	-Clustering ?
+
+
+
